@@ -59,7 +59,7 @@ Bankable::NoteButtonMatrix<2, 14> noteButtonMatrix = {
     {ROW_3, ROW_4}, // row pins
     {COL_0, COL_1, COL_2, COL_3, COL_4, COL_5, COL_6, COL_7, COL_8, COL_9, COL_10, COL_11, COL_12, COL_13},    // column pins
     noteAddresses,    // address matrix
-    CHANNEL_1,    // channel and cable number
+    Channel_1,    // channel and cable number
 };
 
 // Note that plus and minus buttons need special care since they also control the transposer
@@ -75,21 +75,19 @@ CCButtonMatrix<3, 11> ccButtonmatrix = {
     {ROW_0, ROW_1, ROW_2}, // row pins
     {COL_3, COL_4, COL_5, COL_6, COL_7, COL_8, COL_9, COL_10, COL_11, COL_12, COL_13},    // column pins
     ccAddresses,    // address matrix
-    CHANNEL_1,    // channel and cable number
+    Channel_1,    // channel and cable number
 };
 
 bool plusPressed = false;
 bool minusPressed = false;
-bool shiftPressed = false;
 bool shouldUpdateOctave = false;
 
 // There is probably a better way, but this is what I thought of first and it works ok ¯\_(ツ)_/¯
 // Hard to follow though :/
 void updatePlusMinus() {
-    // check if shift is down
-    // getPrevState uses (col, row)
+    // Check if shift is down
+    // getPrevState uses (col, row) - returns 0 when pressed
     if (ccButtonmatrix.getPrevState(0, 2) == 0) {
-        shiftPressed = true;
         // Shift is down so send the octave change messages instead of the regular plus/minus ones
         // Check if plus was released
         if (ccButtonmatrix.getPrevState(3, 0) == 0) {
@@ -119,9 +117,10 @@ void updatePlusMinus() {
         }
 
         if (shouldUpdateOctave) {
-            // Cant send negative midi values, so we need to remap to only positive values
-            map(transposer.getTransposition(), minTransposition, maxTransposition, 0, maxTransposition - minTransposition);
-            Control_Surface.sendControlChange(MIDIAddress(OCTAVE_CHANGE, CHANNEL_1), transposer.getTransposition() + maxTransposition);
+            // Can't send negative MIDI values, so remap transposition to 0-8 range
+            // (transposition is -4 to +4, adding maxTransposition shifts it to 0-8)
+            int octaveValue = transposer.getTransposition() + maxTransposition;
+            Control_Surface.sendControlChange(MIDIAddress(OCTAVE_CHANGE, Channel_1), octaveValue);
             shouldUpdateOctave = false;
         }
     } else {
@@ -129,13 +128,13 @@ void updatePlusMinus() {
         if (ccButtonmatrix.getPrevState(3, 0) == 0) {
             if (!plusPressed) {
                 plusPressed = true;
-                Control_Surface.sendControlChange(MIDIAddress(PLUS_BUTTON, CHANNEL_1), 127);
+                Control_Surface.sendControlChange(MIDIAddress(PLUS_BUTTON, Channel_1), 127);
             }
             
         } else {
             if (plusPressed) {
                 plusPressed = false;
-                Control_Surface.sendControlChange(MIDIAddress(PLUS_BUTTON, CHANNEL_1), 0);
+                Control_Surface.sendControlChange(MIDIAddress(PLUS_BUTTON, Channel_1), 0);
             }
         }
 
@@ -143,12 +142,12 @@ void updatePlusMinus() {
         if (ccButtonmatrix.getPrevState(4, 0) == 0) {
             if (!minusPressed) {
                 minusPressed = true;
-                Control_Surface.sendControlChange(MIDIAddress(MINUS_BUTTON, CHANNEL_1), 127);
+                Control_Surface.sendControlChange(MIDIAddress(MINUS_BUTTON, Channel_1), 127);
             }
         } else {
             if (minusPressed) {
                 minusPressed = false;
-                Control_Surface.sendControlChange(MIDIAddress(MINUS_BUTTON, CHANNEL_1), 0);
+                Control_Surface.sendControlChange(MIDIAddress(MINUS_BUTTON, Channel_1), 0);
             }
         }
     } 
@@ -166,7 +165,7 @@ void loop() {
     if(analog.hasChanged()) {
         // Remap so that pushing stick to the right increases the value
         int remapped =  map(analog.getValue(), 0, 4095, 4095, 0);
-        pbSender.send(remapped, CHANNEL_1);
+        pbSender.send(remapped, Channel_1);
     }
 
     updatePlusMinus();

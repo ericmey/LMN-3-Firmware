@@ -1,4 +1,7 @@
+#pragma once
+
 #include <Arduino.h>
+
 const int HORIZONTAL_PB_PIN = A15;
 
 // CC values
