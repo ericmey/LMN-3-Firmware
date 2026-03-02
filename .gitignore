@@ -1,5 +1,25 @@
+# PlatformIO
 .pio
-CMakeListsPrivate.txt
-cmake-build-*/ 
-.vscode
 
+# CMake
+CMakeListsPrivate.txt
+cmake-build-*/
+
+# IDE
+.vscode
+.idea
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+*.egg-info/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project temp files
+/tmp/
